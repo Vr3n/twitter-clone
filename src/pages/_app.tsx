@@ -6,6 +6,7 @@ import { trpc } from "../utils/trpc";
 
 import "../styles/globals.css";
 import Container from "../components/Container";
+import AuthBanner from "../components/AuthBanner";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -18,6 +19,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
           <Component {...pageProps} />
         </main>
       </Container>
+      <AuthBanner />
     </SessionProvider>
   );
 };

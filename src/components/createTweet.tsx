@@ -31,10 +31,11 @@ const CreateTweet = () => {
         <textarea
           onChange={(e) => setText(e.target.value)}
           className="w-full p-4 shadow-md"
+          placeholder="Tweet about your day!"
         ></textarea>
         <div className="mt-4 flex justify-end">
           <button
-            className="bg-primary rounded-md px-4 py-2 text-white"
+            className="btn-primary"
             type="submit"
           >
             Tweet
