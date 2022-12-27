@@ -10,6 +10,7 @@ const CreateTweet = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("clicked submit!");
 
     try {
       await tweetSchema.parse({ text });
@@ -23,7 +24,7 @@ const CreateTweet = () => {
 
   return (
     <>
-      {error && <p className="text-sm text-red-500">{JSON.stringify(error)}</p>}
+      {/* {error && <p className="text-sm text-red-500">{}</p>} */}
       <form
         className="flex w-full flex-col rounded-md border-2 p-4"
         onSubmit={(e) => handleSubmit(e)}
@@ -34,10 +35,7 @@ const CreateTweet = () => {
           placeholder="Tweet about your day!"
         ></textarea>
         <div className="mt-4 flex justify-end">
-          <button
-            className="btn-primary"
-            type="submit"
-          >
+          <button className="btn-primary" type="submit">
             Tweet
           </button>
         </div>
