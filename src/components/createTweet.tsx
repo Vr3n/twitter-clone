@@ -5,8 +5,14 @@ import { tweetSchema } from "../schemas/tweetSchema";
 const CreateTweet = () => {
   const [text, setText] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const utils = trpc.useContext();
 
-  const { mutateAsync } = trpc.tweet.create.useMutation();
+  const { mutateAsync } = trpc.tweet.create.useMutation({
+    onSuccess: () => {
+      setText("");
+      utils.tweet.list.invalidate();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -14,7 +20,7 @@ const CreateTweet = () => {
 
     try {
       await tweetSchema.parse({ text });
-    } catch (e) {
+    } catch (e: unknown) {
       setError(e.message);
       return;
     }
@@ -24,7 +30,6 @@ const CreateTweet = () => {
 
   return (
     <>
-      {/* {error && <p className="text-sm text-red-500">{}</p>} */}
       <form
         className="flex w-full flex-col rounded-md border-2 p-4"
         onSubmit={(e) => handleSubmit(e)}
@@ -33,6 +38,7 @@ const CreateTweet = () => {
           onChange={(e) => setText(e.target.value)}
           className="w-full p-4 shadow-md"
           placeholder="Tweet about your day!"
+          value={text}
         ></textarea>
         <div className="mt-4 flex justify-end">
           <button className="btn-primary" type="submit">
