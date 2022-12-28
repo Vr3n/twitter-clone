@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CreateTweet from "./createTweet";
-import type { RouterOutputs } from "../utils/trpc";
+import type { RouterInputs, RouterOutputs } from "../utils/trpc";
 import { trpc } from "../utils/trpc";
 import Image from "next/image";
 import dayjs from "dayjs";
@@ -9,6 +9,7 @@ import updateLocal from "dayjs/plugin/updateLocale";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 
 dayjs.extend(relativeTime);
 dayjs.extend(updateLocal);
@@ -32,6 +33,8 @@ dayjs.updateLocale("en", {
     yy: "%dy",
   },
 });
+
+const LIMIT = 10;
 
 const useScrollPosition = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -65,8 +68,10 @@ const updateCache = ({
   variables,
   data,
   action,
+  input,
 }: {
   client: QueryClient;
+  input: RouterInputs["tweet"]["list"];
   variables: {
     tweetId: string;
   };
@@ -79,9 +84,7 @@ const updateCache = ({
     [
       ["tweet", "list"],
       {
-        input: {
-          limit: 10,
-        },
+        input,
         type: "infinite",
       },
     ],
@@ -113,18 +116,20 @@ const updateCache = ({
 const Tweet = ({
   tweet,
   client,
+  input,
 }: {
+  input: RouterInputs["tweet"]["list"];
   tweet: RouterOutputs["tweet"]["list"]["tweets"][number];
   client: QueryClient;
 }) => {
   const likeMutation = trpc.tweet.like.useMutation({
     onSuccess: (data, variables) => {
-      updateCache({ client, data, variables, action: "like" });
+      updateCache({ client, data, variables, input, action: "like" });
     },
   }).mutateAsync;
   const disLikeMutation = trpc.tweet.dislike.useMutation({
     onSuccess: (data, variables) => {
-      updateCache({ client, data, variables, action: "dislike" });
+      updateCache({ client, data, variables, input, action: "dislike" });
     },
   }).mutateAsync;
 
@@ -143,12 +148,14 @@ const Tweet = ({
           />
         )}
         <div className="ml-2 flex flex-col">
-          <div className="flex items-center gap-1">
-            <p className="font-bold">{tweet.author.name} </p>
-            <p className="text-xs text-gray-500">
-              - {dayjs(tweet.createdAt).fromNow()}
-            </p>
-          </div>
+          <Link href={`/${tweet.author.name}`}>
+            <div className="flex cursor-pointer items-center gap-1">
+              <p className="font-bold">{tweet.author.name} </p>
+              <p className="text-sm text-gray-500">
+                - {dayjs(tweet.createdAt).fromNow()}
+              </p>
+            </div>
+          </Link>
           <p>{tweet.text}</p>
         </div>
       </div>
@@ -179,7 +186,11 @@ const Tweet = ({
   );
 };
 
-const Timeline = () => {
+const Timeline = ({
+  where = {},
+}: {
+  where: RouterInputs["tweet"]["list"]["where"];
+}) => {
   const scrollPosition = useScrollPosition();
 
   const client = useQueryClient();
@@ -187,7 +198,8 @@ const Timeline = () => {
   const { data, hasNextPage, fetchNextPage, isFetching } =
     trpc.tweet.list.useInfiniteQuery(
       {
-        limit: 10,
+        limit: LIMIT,
+        where,
       },
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -206,7 +218,15 @@ const Timeline = () => {
     <>
       <CreateTweet />
       {tweets.map((tweet) => (
-        <Tweet tweet={tweet} key={tweet.id} client={client} />
+        <Tweet
+          tweet={tweet}
+          key={tweet.id}
+          client={client}
+          input={{
+            where,
+            limit: LIMIT,
+          }}
+        />
       ))}
       {!hasNextPage && <p className="text-center">No more Tweets to show!</p>}
     </>
